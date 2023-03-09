@@ -1,0 +1,23 @@
+{
+  "name": "fdrive-vault-nodejs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon -w . -w .env index",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Bryan Ronad",
+  "license": "ISC",
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "date-fns": "^2.29.3",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "toobusy-js": "^0.5.1",
+    "uuid": "^9.0.0"
+  }
+}
