@@ -47,7 +47,7 @@ app.use(errorHandler);
 process.on("SIGINT", () => {
   console.log("Closing all connections");
   connections.forEach((ws, token) => {
-    console.log("Closing connetion " + token);
+    console.log("Closing connection " + token);
     ws.close();
   });
   console.log("Websocket connections closed, exiting...");
