@@ -13,20 +13,24 @@ const app = express();
 
 //Server load handler
 app.use(function (req, res, next) {
-  if (toobusy()) {
-    // log if you see necessary
-    res.status(503).json({ message: "Server Too Busy", data: null });
-  } else {
-    next();
-  }
+	if (toobusy()) {
+		// log if you see necessary
+		res.status(503).json({ message: "Server Too Busy", data: null });
+	} else {
+		next();
+	}
 });
 
 //Middlewares
 app.use(
-  cors({
-    origin: ["http://localhost:3000/"],
-    credentials: true,
-  })
+	cors({
+		origin: [
+			"http://localhost:3000/",
+			"http://localhost:8000",
+			"http://localhost:8080/",
+		],
+		credentials: true,
+	})
 );
 app.use(logger);
 app.use(express.json({ limit: "1kb" }));
@@ -45,16 +49,16 @@ app.use("/api/session", sessionRouter);
 app.use(errorHandler);
 
 process.on("SIGINT", () => {
-  console.log("Closing all connections");
-  connections.forEach((ws, token) => {
-    console.log("Closing connection " + token);
-    ws.close();
-  });
-  console.log("Websocket connections closed, exiting...");
-  process.exit();
+	console.log("Closing all connections");
+	connections.forEach((ws, token) => {
+		console.log("Closing connection " + token);
+		ws.close();
+	});
+	console.log("Websocket connections closed, exiting...");
+	process.exit();
 });
 
 const server = app.listen(process.env.PORT || 5000, () => {
-  console.log(`Sandbox listening port ${process.env.PORT || 5000}`);
+	console.log(`Sandbox listening port ${process.env.PORT || 5000}`);
 });
 app.set("server", server);
