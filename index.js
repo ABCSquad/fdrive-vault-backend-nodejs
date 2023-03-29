@@ -5,7 +5,7 @@ import cors from "cors";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import { logger } from "./middlewares/logger.middleware.js";
 import cookieParser from "cookie-parser";
-import { connections } from "./controllers/session.controllers.js";
+import { companionConnections } from "./controllers/session.controllers.js";
 dotenv.config();
 
 //Initialization
@@ -21,10 +21,14 @@ app.use(function (req, res, next) {
   }
 });
 
+// Connect to DB
+import connect from "./utils/db.js";
+connect();
+
 //Middlewares
 app.use(
   cors({
-    origin: ["http://localhost:3000/"],
+    origin: "*",
     credentials: true,
   })
 );
@@ -36,21 +40,23 @@ app.use(cookieParser());
 //Routers
 import homeRouter from "./routes/home.routes.js";
 import sessionRouter from "./routes/session.routes.js";
+import authRouter from "./routes/auth.routes.js";
 
 //Parent routes
 app.use("/api/", homeRouter);
 app.use("/api/session", sessionRouter);
+app.use("/api/auth", authRouter);
 
 //Middlewares (Post routes)
 app.use(errorHandler);
 
 process.on("SIGINT", () => {
-  console.log("Closing all connections");
-  connections.forEach((ws, token) => {
+  console.log("Closing all companionConnections");
+  companionConnections.forEach((ws, token) => {
     console.log("Closing connection " + token);
     ws.close();
   });
-  console.log("Websocket connections closed, exiting...");
+  console.log("Websocket companionConnections closed, exiting...");
   process.exit();
 });
 
