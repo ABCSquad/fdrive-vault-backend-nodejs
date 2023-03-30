@@ -74,7 +74,12 @@ function createWebsocketConnection(token, deviceType) {
         ws.send(`Hey, client ${token}!`);
 
         ws.on("message", (message) => {
-          console.log(`${token} says: ${message}`);
+          // Parse message
+          const data = JSON.parse(message);
+          // Determine type of message
+          if (data.type === "initialPrimaryX3DHMessage") {
+            console.log(data);
+          }
         });
       });
     } else {

@@ -9,7 +9,7 @@ const errorHandler = (err, req, res, next) => {
     `${err.name}: ${err.message}\t${req.method}\t${req.url}\t${req.headers.origin}`,
     "errors.log"
   );
-
+  console.log(err);
   res.status(statusCode);
   res.json({
     message: err.message,
