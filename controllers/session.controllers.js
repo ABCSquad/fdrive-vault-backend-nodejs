@@ -3,6 +3,8 @@ import crypto from "crypto";
 import { WebSocketServer } from "ws";
 import server from "../index.js";
 import { parse } from "url";
+import { PreKeyBundle } from "../models/signal.models.js";
+import { User } from "../models/user.models.js";
 
 // TODO: Use a database to store the companionConnections
 export const companionConnections = new Map();
@@ -65,6 +67,7 @@ function createWebsocketConnection(token, deviceType) {
         ws.on("message", (message) => {
           console.log(`${token} says: ${message}`);
         });
+        companionConnections.set(token, ws);
       });
     } else if (pathname === `/primary/${token}`) {
       wss2.handleUpgrade(request, socket, head, (ws) => {
@@ -73,22 +76,36 @@ function createWebsocketConnection(token, deviceType) {
         // Send message
         ws.send(`Hey, client ${token}!`);
 
-        ws.on("message", (message) => {
+        ws.on("message", async (message) => {
           // Parse message
           const data = JSON.parse(message);
           // Determine type of message
           if (data.type === "initialPrimaryX3DHMessage") {
-            console.log(data);
+            console.log(
+              "Determined it's the primary's initial X3DH message from",
+              data.username
+            );
+            // Get user id from database
+            const userId = await User.findOne({ username: data.username });
+            // Get preKeyBundle from database
+            const preKeyBundleContainer = await PreKeyBundle.findOne({
+              user: userId,
+            });
+            // Send message to companion
+            const messageToCompanion = {
+              type: "primaryPreKeyBundle",
+              preKeyBundle: preKeyBundleContainer.preKeyBundle,
+            };
+            const companionConnection = companionConnections.get(token);
+            companionConnection.send(JSON.stringify(messageToCompanion));
           }
         });
+        primaryConnections.set(token, ws); // associate the token with the websocket connection
       });
     } else {
       socket.destroy();
     }
   });
-
-  primaryConnections.set(token, wss1); // associate the token with the websocket connection
-  companionConnections.set(token, wss2);
 }
 
 // Check if the token is valid

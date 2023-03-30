@@ -24,7 +24,7 @@ const login = asyncHandler(async (req, res) => {
   // Send response
   res
     .status(200)
-    .json({ message: "Logged in user, saved preKeyBundle", data: {} });
+    .json({ message: "Logged in user, saved preKeyBundle", data: user });
 });
 
 export { login };
