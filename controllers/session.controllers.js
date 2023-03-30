@@ -2,6 +2,7 @@ import asyncHandler from "express-async-handler";
 import crypto from "crypto";
 import { WebSocketServer } from "ws";
 import server from "../index.js";
+import { parse } from "url";
 
 // TODO: Use a database to store the companionConnections
 export const companionConnections = new Map();
@@ -9,7 +10,7 @@ export const primaryConnections = new Map();
 
 const sessionInitiate = asyncHandler(async (req, res) => {
   const token = generateToken();
-  const ws = createWebsocketConnection(req, token, "companion");
+  createWebsocketConnection(token, "companion");
   res.status(200).json({ message: "Session initiated", data: token });
 });
 
@@ -20,8 +21,8 @@ const verifyToken = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Token is invalid", data: null });
   }
 
-  // Close the websocket connection
-  closeWebsocketConnection(token);
+  // Create web socket connection for primary
+  // createWebsocketConnection(token, "primary");
 
   res.status(200).json({ message: "Token verified", data: null });
 });
@@ -48,24 +49,41 @@ function generateToken() {
 }
 
 // Create a websocket connection associated with the token
-function createWebsocketConnection(req, token, deviceType) {
-  const ws = new WebSocketServer({ server: server, path: `/token/${token}` });
-  ws.on("connection", (ws) => {
-    console.log("Websocket connection established with token " + token);
-    ws.on("message", (message) => {
-      ws.send(`Hey, client ${token}!`);
-      console.log(`${token} says: ${message}`);
-    });
-    ws.on("close", () => {
-      console.log("Websocket connection closed");
-    });
+function createWebsocketConnection(token, deviceType) {
+  const wss1 = new WebSocketServer({ noServer: true });
+  const wss2 = new WebSocketServer({ noServer: true });
+  server.on("upgrade", (request, socket, head) => {
+    const pathname = parse(request.url).pathname;
+
+    if (pathname === `/companion/${token}`) {
+      wss1.handleUpgrade(request, socket, head, (ws) => {
+        wss1.emit("connection", ws);
+
+        // Send message
+        ws.send(`Hey, client ${token}!`);
+
+        ws.on("message", (message) => {
+          console.log(`${token} says: ${message}`);
+        });
+      });
+    } else if (pathname === `/primary/${token}`) {
+      wss2.handleUpgrade(request, socket, head, (ws) => {
+        wss2.emit("connection", ws);
+
+        // Send message
+        ws.send(`Hey, client ${token}!`);
+
+        ws.on("message", (message) => {
+          console.log(`${token} says: ${message}`);
+        });
+      });
+    } else {
+      socket.destroy();
+    }
   });
-  if (deviceType === "primary") {
-    primaryConnections.set(token, ws); // associate the token with the websocket connection
-  } else {
-    companionConnections.set(token, ws);
-  }
-  return ws;
+
+  primaryConnections.set(token, wss1); // associate the token with the websocket connection
+  companionConnections.set(token, wss2);
 }
 
 // Check if the token is valid
