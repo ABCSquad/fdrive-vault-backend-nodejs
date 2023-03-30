@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import crypto from "crypto";
 import { WebSocketServer } from "ws";
+import server from "../index.js";
 
 // TODO: Use a database to store the companionConnections
 export const companionConnections = new Map();
@@ -48,7 +49,17 @@ function generateToken() {
 
 // Create a websocket connection associated with the token
 function createWebsocketConnection(req, token, deviceType) {
-  const ws = new WebSocketServer({ server: req.app.get("server") });
+  const ws = new WebSocketServer({ server: server, path: `/token/${token}` });
+  ws.on("connection", (ws) => {
+    console.log("Websocket connection established with token " + token);
+    ws.on("message", (message) => {
+      ws.send(`Hey, client ${token}!`);
+      console.log(`${token} says: ${message}`);
+    });
+    ws.on("close", () => {
+      console.log("Websocket connection closed");
+    });
+  });
   if (deviceType === "primary") {
     primaryConnections.set(token, ws); // associate the token with the websocket connection
   } else {

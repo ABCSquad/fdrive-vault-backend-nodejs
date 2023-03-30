@@ -1,4 +1,5 @@
 import express from "express";
+import http from "http";
 import toobusy from "toobusy-js";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -10,6 +11,7 @@ dotenv.config();
 
 //Initialization
 const app = express();
+const server = http.createServer(app);
 
 //Server load handler
 app.use(function (req, res, next) {
@@ -33,8 +35,8 @@ app.use(
   })
 );
 app.use(logger);
-app.use(express.json({ limit: "1kb" }));
-app.use(express.urlencoded({ extended: false, limit: "1kb" }));
+// app.use(express.json({ limit: "1kb" }));
+// app.use(express.urlencoded({ extended: false, limit: "1kb" }));
 app.use(cookieParser());
 
 //Routers
@@ -60,7 +62,8 @@ process.on("SIGINT", () => {
   process.exit();
 });
 
-const server = app.listen(process.env.PORT || 5000, () => {
+server.listen(process.env.PORT || 5000, () => {
   console.log(`Sandbox listening port ${process.env.PORT || 5000}`);
 });
-app.set("server", server);
+
+export default server;
