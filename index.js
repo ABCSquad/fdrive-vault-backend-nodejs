@@ -63,7 +63,7 @@ process.on("SIGINT", () => {
 });
 
 server.listen(process.env.PORT || 5000, () => {
-  console.log(`Sandbox listening port ${process.env.PORT || 5000}`);
+  console.log(`Server listening port ${process.env.PORT || 5000}`);
 });
 
 export default server;

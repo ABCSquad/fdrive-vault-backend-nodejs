@@ -61,8 +61,12 @@ function createWebsocketConnection(token, deviceType) {
       wss1.handleUpgrade(request, socket, head, (ws) => {
         wss1.emit("connection", ws);
 
-        // Send message
-        ws.send(`Hey, client ${token}!`);
+        // Send message with type greeting
+        const greetingMessage = {
+          type: "greeting",
+          message: `Hey, client ${token}!`,
+        };
+        ws.send(JSON.stringify(greetingMessage));
 
         ws.on("message", (message) => {
           console.log(`${token} says: ${message}`);
@@ -73,8 +77,12 @@ function createWebsocketConnection(token, deviceType) {
       wss2.handleUpgrade(request, socket, head, (ws) => {
         wss2.emit("connection", ws);
 
-        // Send message
-        ws.send(`Hey, client ${token}!`);
+        // Send message with type greeting
+        const greetingMessage = {
+          type: "greeting",
+          message: `Hey, client ${token}!`,
+        };
+        ws.send(JSON.stringify(greetingMessage));
 
         ws.on("message", async (message) => {
           // Parse message
