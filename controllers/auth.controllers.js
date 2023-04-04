@@ -4,27 +4,25 @@ import { User } from "../models/user.models.js";
 
 const login = asyncHandler(async (req, res) => {
   const { username, signalProtocolAddress, preKeyBundle } = req.body;
-  // Save user to database if doesn't exist
-  let user = await User.findOne({ username });
-  if (!user) {
-    user = await User.create({
-      username,
-      signalProtocolAddress,
-    });
+  let user = await User.findOneAndDelete({ username });
+  if (user) {
+    // Delete prekeybundle associated with user
+    await PreKeyBundle.deleteOne({ user: user._id });
   }
-  // Save preKeyBundle to database if doesn't exist
-  let newPreKeyBundle = await PreKeyBundle.findOne({ user });
-  if (!newPreKeyBundle) {
-    newPreKeyBundle = await PreKeyBundle.create({
-      user,
-      preKeyBundle,
-    });
-  }
+  const createdUser = await User.create({
+    username,
+    signalProtocolAddress,
+  });
+  user = await User.findOne({ username });
+  const createdPreKeyBundle = await PreKeyBundle.create({
+    user: user._id,
+    preKeyBundle,
+  });
 
   // Send response
   res
     .status(200)
-    .json({ message: "Logged in user, saved preKeyBundle", data: user });
+    .json({ message: "Logged in user, saved preKeyBundle", data: createdUser });
 });
 
 export { login };

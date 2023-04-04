@@ -10,6 +10,16 @@ const preKeyBundleSchema = new mongoose.Schema({
   },
 });
 
-const PreKeyBundle = mongoose.model("PreKeyBundle", preKeyBundleSchema);
+const sessionSchema = new mongoose.Schema({
+  sessionCipher: {
+    type: Object,
+  },
+  startTime: {
+    type: Date,
+  },
+});
 
-export { PreKeyBundle };
+const PreKeyBundle = mongoose.model("PreKeyBundle", preKeyBundleSchema);
+const Session = mongoose.model("Session", sessionSchema);
+
+export { PreKeyBundle, Session };

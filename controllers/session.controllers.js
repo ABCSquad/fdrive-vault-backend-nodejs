@@ -69,7 +69,15 @@ function createWebsocketConnection(token, deviceType) {
         ws.send(JSON.stringify(greetingMessage));
 
         ws.on("message", (message) => {
-          console.log(`${token} says: ${message}`);
+          // Parse message
+          const data = JSON.parse(message);
+          // Determine type of message
+          if (data.type === "preKeyWhisperMessage") {
+            // Send ciphertext to primary
+            console.log("preKeyWhisperMessage", data);
+            const primaryConnection = primaryConnections.get(token);
+            primaryConnection.send(JSON.stringify(data));
+          }
         });
         companionConnections.set(token, ws);
       });
@@ -94,18 +102,23 @@ function createWebsocketConnection(token, deviceType) {
               data.username
             );
             // Get user id from database
-            const userId = await User.findOne({ username: data.username });
+            const user = await User.findOne({ username: data.username });
             // Get preKeyBundle from database
             const preKeyBundleContainer = await PreKeyBundle.findOne({
-              user: userId,
+              user: user._id,
             });
             // Send message to companion
             const messageToCompanion = {
               type: "primaryPreKeyBundle",
               preKeyBundle: preKeyBundleContainer.preKeyBundle,
+              primarySignalProtocolAddress: data.signalProtocolAddress,
+              primaryUsername: data.username,
             };
             const companionConnection = companionConnections.get(token);
             companionConnection.send(JSON.stringify(messageToCompanion));
+          }
+          if (data.type === "X3DHCompletionMessage") {
+            console.log("X3DH complete, data to store: ", data);
           }
         });
         primaryConnections.set(token, ws); // associate the token with the websocket connection

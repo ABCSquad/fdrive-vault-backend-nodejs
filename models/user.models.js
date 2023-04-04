@@ -10,6 +10,19 @@ const userSchema = new mongoose.Schema(
     signalProtocolAddress: {
       type: String,
     },
+    devices: [
+      {
+        signalProtocolAddress: {
+          type: String,
+          required: true,
+        },
+        session: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Session",
+          required: true,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );
