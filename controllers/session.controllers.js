@@ -12,7 +12,6 @@ export const primaryConnections = new Map();
 
 const sessionInitiate = asyncHandler(async (req, res) => {
   const token = generateToken();
-  createWebsocketConnection(token, "companion");
   res.status(200).json({ message: "Session initiated", data: token });
 });
 
@@ -64,7 +63,7 @@ function createWebsocketConnection(token, deviceType) {
         // Send message with type greeting
         const greetingMessage = {
           type: "greeting",
-          message: `Hey, client ${token}!`,
+          message: `C-S connection - ${token}!`,
         };
         ws.send(JSON.stringify(greetingMessage));
 
@@ -143,4 +142,4 @@ function closeWebsocketConnection(token) {
   }
 }
 
-export { sessionInitiate, verifyToken, checkConnection };
+export { sessionInitiate, verifyToken, checkConnection, generateToken };
