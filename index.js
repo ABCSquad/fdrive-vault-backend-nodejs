@@ -131,6 +131,14 @@ wss.on("connection", (ws, request) => {
         };
         companionWS.send(JSON.stringify(messageToCompanion));
       }
+      if (data.type === "whisperMessage") {
+        // Send whisperMessage to companion
+        const messageToCompanion = {
+          type: "whisperMessage",
+          data: data.data,
+        };
+        companionWS.send(JSON.stringify(messageToCompanion));
+      }
     });
   } else if (url === "/companion/preKeyWhisperMessage") {
     ws.on("message", async (message) => {
