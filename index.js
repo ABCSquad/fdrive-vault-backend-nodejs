@@ -74,6 +74,22 @@ wss.on("connection", (ws, request) => {
     const token = generateToken();
     companions.set(ws, token);
     ws.send(JSON.stringify({ type: "success", token }));
+    console.log("I should be visible just once, right?");
+    ws.on("message", async (message) => {
+      const data = JSON.parse(message);
+      if (data.type === "preKeyWhisperMessage") {
+        console.log("PreKeyWhisper received", data.data);
+        // Send message to primary to test decryption and create session
+        const messageToPrimary = {
+          type: "preKeyWhisperMessage",
+          data: data.data,
+        };
+        const token = companions.get(ws);
+        const primaryWS = getKeyByValue(primaries, token);
+        primaryWS.send(JSON.stringify(messageToPrimary));
+      }
+    });
+
     /**
      * Companion Connection
      */
@@ -114,6 +130,21 @@ wss.on("connection", (ws, request) => {
           },
         };
         companionWS.send(JSON.stringify(messageToCompanion));
+      }
+    });
+  } else if (url === "/companion/preKeyWhisperMessage") {
+    ws.on("message", async (message) => {
+      const data = JSON.parse(message);
+      if (data.type === "preKeyWhisperMessage") {
+        console.log("PreKeyWhisper received", data.data);
+        // Send message to primary to test decryption and create session
+        const messageToPrimary = {
+          type: "preKeyWhisperMessage",
+          data: data.data,
+        };
+        const token = companions.get(ws);
+        const primaryWS = getKeyByValue(primaries, token);
+        primaryWS.send(JSON.stringify(messageToPrimary));
       }
     });
   } else {
