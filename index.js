@@ -121,6 +121,7 @@ wss.on("connection", (ws, request) => {
         const preKeyBundleContainer = await PreKeyBundle.findOne({
           user: user._id,
         });
+        console.log("test", preKeyBundleContainer);
         // Send message to companion
         const messageToCompanion = {
           type: "primaryInformation",
@@ -139,6 +140,17 @@ wss.on("connection", (ws, request) => {
           data: data.data,
         };
         companionWS.send(JSON.stringify(messageToCompanion));
+      }
+      if (data.type === "preKeyBundleUpdate") {
+        // Update user's preKeyBundle in database
+        const user = await User.findOne({ username: data.data.username });
+        await PreKeyBundle.deleteOne({ user: user._id });
+        const createdPreKeyBundle = await PreKeyBundle.create({
+          user: user._id,
+          preKeyBundle: data.data.newPreKeyBundle,
+        });
+        console.log(user._id, createdPreKeyBundle);
+        // Close connections
         companionWS.close();
         companions.delete(companionWS);
         ws.close();
