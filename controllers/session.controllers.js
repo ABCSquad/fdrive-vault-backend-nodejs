@@ -73,7 +73,6 @@ function createWebsocketConnection(token, deviceType) {
           // Determine type of message
           if (data.type === "preKeyWhisperMessage") {
             // Send ciphertext to primary
-            console.log("preKeyWhisperMessage", data);
             const primaryConnection = primaryConnections.get(token);
             primaryConnection.send(JSON.stringify(data));
           }
@@ -96,10 +95,6 @@ function createWebsocketConnection(token, deviceType) {
           const data = JSON.parse(message);
           // Determine type of message
           if (data.type === "initialPrimaryX3DHMessage") {
-            console.log(
-              "Determined it's the primary's initial X3DH message from",
-              data.username
-            );
             // Get user id from database
             const user = await User.findOne({ username: data.username });
             // Get preKeyBundle from database
@@ -117,7 +112,6 @@ function createWebsocketConnection(token, deviceType) {
             companionConnection.send(JSON.stringify(messageToCompanion));
           }
           if (data.type === "X3DHCompletionMessage") {
-            console.log("X3DH complete, data to store: ", data);
           }
         });
         primaryConnections.set(token, ws); // associate the token with the websocket connection

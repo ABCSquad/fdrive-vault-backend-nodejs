@@ -47,6 +47,8 @@ app.use(cookieParser());
 import homeRouter from "./routes/home.routes.js";
 import sessionRouter from "./routes/session.routes.js";
 import authRouter from "./routes/auth.routes.js";
+import keyRouter from "./routes/key.routes.js";
+import userRouter from "./routes/user.routes.js";
 import { User } from "./models/user.models.js";
 import { PreKeyBundle } from "./models/signal.models.js";
 
@@ -54,6 +56,8 @@ import { PreKeyBundle } from "./models/signal.models.js";
 app.use("/api/", homeRouter);
 app.use("/api/session", sessionRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/key", keyRouter);
+app.use("/api/user", userRouter);
 
 //Middlewares (Post routes)
 app.use(errorHandler);
@@ -74,11 +78,9 @@ wss.on("connection", (ws, request) => {
     const token = generateToken();
     companions.set(ws, token);
     ws.send(JSON.stringify({ type: "success", token }));
-    console.log("I should be visible just once, right?");
     ws.on("message", async (message) => {
       const data = JSON.parse(message);
       if (data.type === "preKeyWhisperMessage") {
-        console.log("PreKeyWhisper received", data.data);
         // Send message to primary to test decryption and create session
         const messageToPrimary = {
           type: "preKeyWhisperMessage",
@@ -112,7 +114,6 @@ wss.on("connection", (ws, request) => {
     ws.on("message", async (message) => {
       const data = JSON.parse(message);
       if (data.type === "primaryInformation") {
-        console.log("Primary information received", data);
         // Get preKeyBundle from database
         // Get user id from database
         const user = await User.findOne({ username: data.username });
@@ -138,13 +139,16 @@ wss.on("connection", (ws, request) => {
           data: data.data,
         };
         companionWS.send(JSON.stringify(messageToCompanion));
+        companionWS.close();
+        companions.delete(companionWS);
+        ws.close();
+        primaries.delete(ws);
       }
     });
   } else if (url === "/companion/preKeyWhisperMessage") {
     ws.on("message", async (message) => {
       const data = JSON.parse(message);
       if (data.type === "preKeyWhisperMessage") {
-        console.log("PreKeyWhisper received", data.data);
         // Send message to primary to test decryption and create session
         const messageToPrimary = {
           type: "preKeyWhisperMessage",
