@@ -46,7 +46,6 @@ const checkKey = asyncHandler(async (req, res) => {
   const keysToSend = keys.filter((key) => {
     return key.keys.length < numberOfCompanions;
   });
-  console.log(keysToSend);
   // Send response
   res.status(200).json({
     message: "Keys checked successfully",
