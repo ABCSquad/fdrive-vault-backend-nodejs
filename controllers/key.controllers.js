@@ -53,4 +53,27 @@ const checkKey = asyncHandler(async (req, res) => {
   });
 });
 
-export { uploadKey, checkKey };
+const updateKey = asyncHandler(async (req, res) => {
+  const { username, updatedKeys } = req.body;
+  console.log(updatedKeys);
+  // Iterate over updatedKeys
+  Object.keys(updatedKeys).forEach(async (keyId) => {
+    // Find key in database
+    const updatedKey = await Key.findByIdAndUpdate(
+      keyId,
+      {
+        $push: { keys: updatedKeys[keyId] },
+      },
+      {
+        new: true,
+      }
+    );
+  });
+  // Send response
+  res.status(200).json({
+    message: "Keys updated successfully",
+    data: null,
+  });
+});
+
+export { uploadKey, checkKey, updateKey };
