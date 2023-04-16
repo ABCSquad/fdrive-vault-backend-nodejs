@@ -23,6 +23,7 @@ const uploadKey = asyncHandler(async (req, res) => {
         companionAddress: companionAddress,
         key: key,
         uploader: true,
+        sameChainEncrypted: true,
       },
     ],
   });
@@ -41,28 +42,54 @@ const checkKey = asyncHandler(async (req, res) => {
   // Get number of companions for owner
   const numberOfCompanions = owner.devices.length;
   // Get all keys for owner
-  const keys = await Key.find({ owner: owner._id });
-  // Find keys that have dont have versions for all companions
-  const keysToSend = keys.filter((key) => {
-    return key.keys.length < numberOfCompanions;
-  });
-  // Send response
+  let keys = await Key.find({ owner: owner._id });
+  // Check if some keys dont have versions for requesting companion
+  const missingKeys = keys.filter((keyObj) => {
+    return (
+      keyObj.keys.length < numberOfCompanions ||
+      keyObj.keys.some((key) => key.sameChainEncrypted)
+    );
+  }); // Send response
   res.status(200).json({
     message: "Keys checked successfully",
-    data: keysToSend,
+    data: missingKeys,
   });
 });
 
 const updateKey = asyncHandler(async (req, res) => {
-  const { username, updatedKeys } = req.body;
-  console.log(updatedKeys);
-  // Iterate over updatedKeys
-  Object.keys(updatedKeys).forEach(async (keyId) => {
+  const {
+    username,
+    missingCompanionsUpdatedKeys,
+    existingCompanionsUpdatedKeys,
+  } = req.body;
+  console.log(missingCompanionsUpdatedKeys, existingCompanionsUpdatedKeys);
+  // Iterate over missingCompanionUpdatedKeys
+  let updatedKey;
+  Object.keys(missingCompanionsUpdatedKeys).forEach(async (keyId) => {
     // Find key in database
-    const updatedKey = await Key.findByIdAndUpdate(
+    updatedKey = await Key.findByIdAndUpdate(
       keyId,
       {
-        $push: { keys: updatedKeys[keyId] },
+        $push: { keys: missingCompanionsUpdatedKeys[keyId] },
+      },
+      {
+        new: true,
+      }
+    );
+  });
+  // Iterate over existingCompanionsUpdatedKeys
+  Object.keys(existingCompanionsUpdatedKeys).forEach(async (keyId) => {
+    // Find key in database and update only the key and sameChainEncrypted
+    updatedKey = await Key.findOneAndUpdate(
+      {
+        _id: keyId,
+        "keys.sameChainEncrypted": true,
+      },
+      {
+        $set: {
+          "keys.$.key": existingCompanionsUpdatedKeys[keyId][0].key,
+          "keys.$.sameChainEncrypted": false,
+        },
       },
       {
         new: true,

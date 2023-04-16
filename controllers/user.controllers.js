@@ -37,11 +37,21 @@ const getUserKeys = asyncHandler(async (req, res) => {
   // Get owners id
   const user = await User.findOne({ username });
   // Get all keys for user
-  const keys = await Key.find({ owner: user._id });
+  let keys = await Key.find({ owner: user._id });
   // Check if some keys dont have versions for requesting companion
   const missingKeys = keys.filter((keyObj) => {
-    return !keyObj.keys.some(
-      (key) => key.companionAddress === `${username}.${registrationId}`
+    return (
+      !keyObj.keys.some(
+        (key) => key.companionAddress === `${username}.${registrationId}`
+      ) || keyObj.keys.some((key) => key.sameChainEncrypted)
+    );
+  });
+  // Remove missingKeys from keys
+  keys = keys.filter((keyObj) => {
+    return (
+      keyObj.keys.some(
+        (key) => key.companionAddress === `${username}.${registrationId}`
+      ) && keyObj.keys.every((key) => !key.sameChainEncrypted)
     );
   });
   // Send response

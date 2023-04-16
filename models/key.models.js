@@ -25,6 +25,10 @@ const keySchema = new mongoose.Schema({
         required: true,
         default: false,
       },
+      sameChainEncrypted: {
+        type: Boolean,
+        default: undefined,
+      },
     },
   ],
 });
